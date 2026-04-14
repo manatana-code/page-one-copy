@@ -700,7 +700,7 @@
       <button type="submit" class="gate-btn">Start writing my site →</button>
       <p class="gate-consent">By entering your email you agree to receive occasional emails from Gumptious Design Shop. No spam, ever. Unsubscribe anytime.</p>
       <div class="gate-disclaimer">
-        <p><strong>Your data goes nowhere.</strong> This tool runs in real-time. Nothing is saved, nothing is stored. Close the tab and it is gone.</p>
+        <p><strong>Your email is saved.</strong> We'll occasionally send you useful things from Gumptious Design Shop. No spam, ever. Unsubscribe anytime. Everything else you enter — your brand details, your answers — runs in real-time and is never stored.</p>
         <p>The copy it generates is a strategic starting point, not a finished product. It is built on a proven content framework, shaped by your answers, and designed to sound like your brand. Like any AI output, it still needs your eyes, your judgment, and your voice before it is ready to publish.</p>
         <p>Think of it as the blank page, solved. What you do with it from here is yours.</p>
       </div>
@@ -908,7 +908,7 @@
 <script>
 // ── CONFIG ────────────────────────────────────────────────────────────────────
 const API_ENDPOINT = '/api/generate';
-const MAILCHIMP_URL = '';
+const SHEET_WEBHOOK = 'https://script.google.com/macros/s/AKfycbwkwcYc9uPlhxKp2jyD3Nf0hrP1_tGQrSPrIYThhYr2pRIVBBxX9kU_x1oSw4jw45B4/exec';
 
 // ── INDUSTRY → PAGE SETS ──────────────────────────────────────────────────────
 const INDUSTRY_PAGES = {
@@ -1298,16 +1298,18 @@ document.getElementById('gate-form').addEventListener('submit', function(e) {
   e.preventDefault();
   userData.name = document.getElementById('gate-name').value.trim();
   userData.email = document.getElementById('gate-email').value.trim();
-  if (MAILCHIMP_URL) subscribeMailchimp(userData.email, userData.name);
+  captureEmail(userData.name, userData.email);
   showScreen('form');
   initProgress();
 });
 
-function subscribeMailchimp(email, name) {
-  const url = MAILCHIMP_URL + '&EMAIL=' + encodeURIComponent(email) + '&FNAME=' + encodeURIComponent(name) + '&c=cb';
-  const s = document.createElement('script');
-  s.src = url;
-  document.body.appendChild(s);
+function captureEmail(name, email) {
+  fetch(SHEET_WEBHOOK, {
+    method: 'POST',
+    mode: 'no-cors',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ name, email })
+  }).catch(() => {}); // silent fail — never block the user
 }
 
 // ── INDUSTRY SELECTOR ────────────────────────────────────────────────────────
