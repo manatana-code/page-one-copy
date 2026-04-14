@@ -155,76 +155,6 @@
     letter-spacing: 0.05em;
   }
 
-  .gate-url-group {
-    display: flex; align-items: center;
-    border: 1px solid var(--cream-dark); border-radius: 4px;
-    background: var(--white); overflow: hidden;
-    transition: border-color 0.2s;
-  }
-
-  .gate-url-group:focus-within { border-color: var(--teal); }
-
-  .gate-url-prefix {
-    padding: 16px 0 16px 16px;
-    font-family: var(--sans); font-size: 15px;
-    color: var(--light); white-space: nowrap;
-    user-select: none;
-  }
-
-  .gate-url-input {
-    border: none !important;
-    box-shadow: none !important;
-    padding-left: 4px !important;
-    flex: 1;
-    outline: none;
-  }
-
-  .gate-url-input:focus { border-color: transparent !important; box-shadow: none !important; }
-
-  .gate-stage-group {
-    display: flex; flex-direction: column; gap: 8px;
-  }
-
-  .gate-stage-label {
-    font-size: 12px; font-weight: 500;
-    letter-spacing: 0.12em; text-transform: uppercase;
-    color: var(--teal-dark); margin-bottom: 2px;
-    text-align: left;
-  }
-
-  .gate-stage-options {
-    display: flex; flex-direction: column; gap: 8px;
-  }
-
-  .gate-stage-option {
-    padding: 13px 18px;
-    border: 1px solid var(--cream-dark); border-radius: 4px;
-    background: var(--white); cursor: pointer;
-    font-family: var(--sans); font-size: 14px; color: var(--charcoal);
-    text-align: left; transition: all 0.2s;
-    display: flex; align-items: center; gap: 10px;
-  }
-
-  .gate-stage-option:hover { border-color: var(--teal-light); background: var(--cream); }
-
-  .gate-stage-option.selected {
-    border-color: var(--teal);
-    background: rgba(122,158,159,0.08);
-    color: var(--teal-dark);
-  }
-
-  .gate-stage-option::before {
-    content: ''; display: block;
-    width: 14px; height: 14px; min-width: 14px;
-    border: 1.5px solid var(--cream-dark); border-radius: 50%;
-    transition: all 0.2s;
-  }
-
-  .gate-stage-option.selected::before {
-    border-color: var(--teal);
-    background: var(--teal);
-  }
-
   .gate-features {
     margin-top: 48px; padding-top: 40px;
     border-top: 1px solid var(--cream-dark);
@@ -767,18 +697,6 @@
     <form class="gate-form" id="gate-form">
       <input type="text" class="gate-input" id="gate-name" placeholder="Your first name" required autocomplete="given-name">
       <input type="email" class="gate-input" id="gate-email" placeholder="Your email address" required autocomplete="email">
-      <div class="gate-url-group">
-        <span class="gate-url-prefix">https://www.</span>
-        <input type="text" class="gate-input gate-url-input" id="gate-website" placeholder="yourdomain.com" autocomplete="off">
-      </div>
-      <div class="gate-stage-group">
-        <p class="gate-stage-label">Where are you in business?</p>
-        <div class="gate-stage-options" id="gate-stage-options">
-          <button type="button" class="gate-stage-option" data-stage="just-starting">Just starting out</button>
-          <button type="button" class="gate-stage-option" data-stage="1-3-years">Been in business 1–3 years</button>
-          <button type="button" class="gate-stage-option" data-stage="established">Established, ready to level up</button>
-        </div>
-      </div>
       <button type="submit" class="gate-btn">Start writing my site →</button>
       <p class="gate-consent">By entering your email you agree to receive occasional emails from Gumptious Design Shop. No spam, ever. Unsubscribe anytime.</p>
       <div class="gate-disclaimer">
@@ -1375,23 +1293,11 @@ let currentPage = null;
 let selectedIndustry = null;
 let activePages = [];
 
-// ── GATE STAGE SELECTOR ──────────────────────────────────────────────────────
-document.getElementById('gate-stage-options').addEventListener('click', function(e) {
-  const btn = e.target.closest('.gate-stage-option');
-  if (!btn) return;
-  document.querySelectorAll('.gate-stage-option').forEach(b => b.classList.remove('selected'));
-  btn.classList.add('selected');
-  userData.business_stage = btn.dataset.stage;
-});
-
 // ── GATE ─────────────────────────────────────────────────────────────────────
 document.getElementById('gate-form').addEventListener('submit', function(e) {
   e.preventDefault();
   userData.name = document.getElementById('gate-name').value.trim();
   userData.email = document.getElementById('gate-email').value.trim();
-  const rawSite = document.getElementById('gate-website').value.trim();
-  userData.website = rawSite ? 'https://www.' + rawSite.replace(/^https?:\/\/(www\.)?/, '') : '';
-  // business_stage already set by click handler above
   captureEmail(userData.name, userData.email);
   showScreen('form');
   initProgress();
@@ -1402,7 +1308,7 @@ function captureEmail(name, email) {
     method: 'POST',
     mode: 'no-cors',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ name, email, website: userData.website, business_stage: userData.business_stage })
+    body: JSON.stringify({ name, email })
   }).catch(() => {}); // silent fail — never block the user
 }
 
@@ -1537,8 +1443,6 @@ function buildSystem() {
 BRAND CONTEXT:
 Name: ${brandData.brand_name}
 Industry: ${brandData.industry_label}
-Business stage: ${userData.business_stage ? {'just-starting':'Just starting out','1-3-years':'1–3 years in business','established':'Established, levelling up'}[userData.business_stage] : 'not specified'}
-Current website: ${userData.website || 'none provided'}
 Specialty: ${brandData.specialty}
 What they do: ${brandData.what_you_do}
 Ideal client: ${brandData.audience}
@@ -1803,7 +1707,6 @@ function startOver() {
     selectedIndustry = null; activePages = [];
     window.positioningStatement = null;
     document.getElementById('gate-form').reset();
-    document.querySelectorAll('.gate-stage-option').forEach(b => b.classList.remove('selected'));
     document.getElementById('brand-form').reset();
     document.querySelectorAll('.industry-option').forEach(o => o.classList.remove('selected'));
     document.getElementById('pages-preview').classList.remove('visible');
