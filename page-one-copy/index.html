@@ -1457,6 +1457,7 @@ FRAMEWORK RULES:
 - Read everything as if you're the ideal client — if you wince, rewrite it
 
 BANNED WORDS (flag if they appear): passionate, dedicated, empowering, unleash, holistic, authentic, innovative, seamless, comprehensive, bespoke, game-changer, journey, synergy, on a journey, one-stop-shop
+BANNED PUNCTUATION: Never use em dashes (—) anywhere in the output. Use a period, comma, or rewrite the sentence instead.
 
 OUTPUT FORMAT — for every section:
 SECTION NAME
@@ -1513,21 +1514,22 @@ function parseSections(raw) {
     const lines = block.trim().split('\n');
     if (!lines.length) return;
 
-    let title = lines[0].trim().replace(/^\d+\.\s*/, '').replace(/\*\*/g, '');
+    let title = lines[0].trim().replace(/^#+\s*/, '').replace(/^\d+\.\s*/, '').replace(/\*\*/g, '').replace(/\*/g, '');
     let strategicNote = '';
     let bodyLines = [];
     let inNote = false;
 
     for (let i = 1; i < lines.length; i++) {
       const line = lines[i];
-      if (line.trim().startsWith('(Strategic note:') || line.trim().startsWith('(Strategic')) {
-        strategicNote = line.trim().replace(/^\(/, '').replace(/\)$/, '');
-        inNote = true;
-      } else if (inNote && line.trim().endsWith(')')) {
-        strategicNote += ' ' + line.trim().replace(/\)$/, '');
+      const stripped = line.trim().replace(/^\*/, '').replace(/\*$/, '');
+      if (stripped.startsWith('(Strategic note:') || stripped.startsWith('(Strategic')) {
+        strategicNote = stripped.replace(/^\(/, '').replace(/\)$/, '');
+        inNote = !stripped.endsWith(')');
+      } else if (inNote && stripped.endsWith(')')) {
+        strategicNote += ' ' + stripped.replace(/\)$/, '');
         inNote = false;
       } else if (inNote) {
-        strategicNote += ' ' + line.trim();
+        strategicNote += ' ' + stripped;
       } else {
         bodyLines.push(line);
       }
@@ -1574,7 +1576,7 @@ function renderOutput(page, sections) {
         <div class="copy-section-header">
           <div>
             <span class="copy-section-title">${s.title}</span>
-            ${s.strategicNote ? `<div style="font-size:11px;color:var(--teal-dark);font-style:italic;margin-top:3px">${escapeHTML(s.strategicNote)}</div>` : ''}
+            ${s.strategicNote ? `<div style="font-size:11px;color:var(--teal-dark);font-style:italic;margin-top:3px"><em>${escapeHTML(s.strategicNote)}</em></div>` : ''}
           </div>
           <div class="copy-section-actions">
             <button class="copy-btn" onclick="toggleEdit(this,'ct-${page.id}-${idx}')">Edit</button>
