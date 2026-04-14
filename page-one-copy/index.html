@@ -560,6 +560,13 @@
 
   .copy-section-body { padding: 24px; }
 
+  .copy-section-title[contenteditable="true"] {
+    outline: none;
+    border-bottom: 1px dashed var(--teal-light);
+    cursor: text;
+    display: inline-block;
+  }
+
   .copy-text {
     font-size: 16px; line-height: 1.85; color: var(--charcoal);
     white-space: pre-wrap; font-weight: 300;
@@ -1574,12 +1581,13 @@ function renderOutput(page, sections) {
     html += `
       <div class="copy-section">
         <div class="copy-section-header">
-          <div>
-            <span class="copy-section-title">${s.title}</span>
-            ${s.strategicNote ? `<div style="font-size:11px;color:var(--teal-dark);font-style:italic;margin-top:3px"><em>${escapeHTML(s.strategicNote)}</em></div>` : ''}
+          <div style="flex:1;min-width:0">
+            <span class="copy-section-title" id="ct-title-${page.id}-${idx}">${escapeHTML(s.title)}</span>
+            ${s.strategicNote ? `<div style="font-size:14px;color:var(--teal-dark);font-style:italic;margin-top:6px;line-height:1.5"><em>${escapeHTML(s.strategicNote)}</em></div>` : ''}
           </div>
           <div class="copy-section-actions">
-            <button class="copy-btn" onclick="toggleEdit(this,'ct-${page.id}-${idx}')">Edit</button>
+            <button class="copy-btn" onclick="copySection(this,'ct-title-${page.id}-${idx}','ct-${page.id}-${idx}')">Copy</button>
+            <button class="copy-btn" onclick="toggleEditBoth(this,'ct-title-${page.id}-${idx}','ct-${page.id}-${idx}')">Edit</button>
           </div>
         </div>
         <div class="copy-section-body">
@@ -1623,20 +1631,28 @@ function escapeForAttr(str) {
   return String(str).replace(/`/g,'\\`').replace(/\$/g,'\\$');
 }
 
-function toggleEdit(btn, id) {
-  const el = document.getElementById(id);
-  if (el.contentEditable === 'true') {
-    el.contentEditable = 'false';
+function toggleEditBoth(btn, titleId, bodyId) {
+  const title = document.getElementById(titleId);
+  const body  = document.getElementById(bodyId);
+  const editing = body.contentEditable === 'true';
+  if (editing) {
+    title.contentEditable = 'false';
+    body.contentEditable  = 'false';
+    title.style.outline = '';
     btn.textContent = 'Edit';
   } else {
-    el.contentEditable = 'true';
-    el.focus();
+    title.contentEditable = 'true';
+    body.contentEditable  = 'true';
+    title.style.cssText += ';outline:none;border-bottom:1px dashed var(--teal-light);cursor:text';
+    body.focus();
     btn.textContent = 'Done';
   }
 }
 
-function copySection(btn, id) {
-  const text = document.getElementById(id).innerText;
+function copySection(btn, titleId, bodyId) {
+  const titleEl = document.getElementById(titleId);
+  const bodyEl  = document.getElementById(bodyId);
+  const text = (titleEl ? titleEl.innerText.trim() + '\n' : '') + (bodyEl ? bodyEl.innerText.trim() : '');
   navigator.clipboard.writeText(text).then(() => {
     btn.textContent = 'Copied!';
     btn.classList.add('copied');
@@ -1653,13 +1669,19 @@ function copyRaw(btn, text) {
 }
 
 function copyCurrentPage() {
-  const sections = document.querySelectorAll('.copy-text');
   const page = activePages.find(p => p.id === currentPage);
   let all = page ? `=== ${page.name.toUpperCase()} ===\n\n` : '';
   if (currentPage === 'home' && window.positioningStatement) {
     all += `POSITIONING STATEMENT\n${window.positioningStatement}\n\n---\n\n`;
   }
-  sections.forEach(s => { all += s.innerText + '\n\n---\n\n'; });
+  // Collect paired title + body for each section
+  document.querySelectorAll('.copy-section').forEach(section => {
+    const titleEl = section.querySelector('[id^="ct-title-"]');
+    const bodyEl  = section.querySelector('.copy-text');
+    if (titleEl) all += titleEl.innerText.trim() + '\n';
+    if (bodyEl)  all += bodyEl.innerText.trim();
+    all += '\n\n---\n\n';
+  });
   navigator.clipboard.writeText(all.trim()).then(() => {
     const btn = document.querySelector('.btn-primary-sm');
     btn.textContent = 'Copied!';
