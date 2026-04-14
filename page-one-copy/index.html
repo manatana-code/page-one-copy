@@ -155,6 +155,32 @@
     letter-spacing: 0.05em;
   }
 
+  .gate-url-group {
+    display: flex; align-items: center;
+    border: 1px solid var(--cream-dark); border-radius: 4px;
+    background: var(--white); overflow: hidden;
+    transition: border-color 0.2s;
+  }
+
+  .gate-url-group:focus-within { border-color: var(--teal); }
+
+  .gate-url-prefix {
+    padding: 16px 0 16px 16px;
+    font-family: var(--sans); font-size: 15px;
+    color: var(--light); white-space: nowrap;
+    user-select: none;
+  }
+
+  .gate-url-input {
+    border: none !important;
+    box-shadow: none !important;
+    padding-left: 4px !important;
+    flex: 1;
+    outline: none;
+  }
+
+  .gate-url-input:focus { border-color: transparent !important; box-shadow: none !important; }
+
   .gate-stage-group {
     display: flex; flex-direction: column; gap: 8px;
   }
@@ -741,7 +767,10 @@
     <form class="gate-form" id="gate-form">
       <input type="text" class="gate-input" id="gate-name" placeholder="Your first name" required autocomplete="given-name">
       <input type="email" class="gate-input" id="gate-email" placeholder="Your email address" required autocomplete="email">
-      <input type="url" class="gate-input" id="gate-website" placeholder="Your website URL (if you have one)" autocomplete="url">
+      <div class="gate-url-group">
+        <span class="gate-url-prefix">https://www.</span>
+        <input type="text" class="gate-input gate-url-input" id="gate-website" placeholder="yourdomain.com" autocomplete="off">
+      </div>
       <div class="gate-stage-group">
         <p class="gate-stage-label">Where are you in business?</p>
         <div class="gate-stage-options" id="gate-stage-options">
@@ -1360,7 +1389,8 @@ document.getElementById('gate-form').addEventListener('submit', function(e) {
   e.preventDefault();
   userData.name = document.getElementById('gate-name').value.trim();
   userData.email = document.getElementById('gate-email').value.trim();
-  userData.website = document.getElementById('gate-website').value.trim();
+  const rawSite = document.getElementById('gate-website').value.trim();
+  userData.website = rawSite ? 'https://www.' + rawSite.replace(/^https?:\/\/(www\.)?/, '') : '';
   // business_stage already set by click handler above
   captureEmail(userData.name, userData.email);
   showScreen('form');
